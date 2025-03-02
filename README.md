@@ -1,6 +1,17 @@
 
 ![](images/traffic.png)
 
+## **📡 Introduction**
+A lightweight toolkit for real-time capturing, analyzing, and enforcing data usage policies on network traffic. This project leverages `linux`, `tcpdump`, `tshark`, `bash` and `python` to inspect network packets and identify high-bandwidth applications.
+
+### **🚀 Features**
+✅ **Capture Network Traffic** using `tcpdump` for raw packet collection.  
+✅ **Analyze Bandwidth Usage** with `tshark` and `python` to break down traffic.  
+✅ **Identify High Data Usage Apps** by inspecting UDP/TCP connections.  
+✅ **Real Time Traffic Monitoring** with `bash` and `python`.   
+
+<br/>
+
 ## 📥 Capture Network Traffic
 Used `tcpdump`, as it's more handy in servers where tools like `wireshark` won't be an option.
 ```bash
