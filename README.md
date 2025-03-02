@@ -132,7 +132,7 @@ done
 ```
 
 ### Python `IPs` bandwidth usage
-```json
+```python
 "source_ip", "destination_ip": total_k_bytes_usage_for_ip (in KB),
 .
 .
