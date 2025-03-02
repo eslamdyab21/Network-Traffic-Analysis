@@ -1,8 +1,10 @@
-# Capture & Analyze Network Traffic
+
+![](images/traffic.png)
+
 ## 📥 Capture Network Traffic
 Used `tcpdump`, as it's more handy in servers where tools like `wireshark` won't be an option.
 ```bash
-sudo tcpdump -i eth0 -w capture.pcap -v
+sudo tcpdump -i wlp8s0 -w capture.pcap -v
 ```
 
 <br/>
@@ -97,10 +99,101 @@ And surly enough if we add the bytes usage for you-tube ips, we get the same num
 
 <br/>
 
-# Data Plan Enforcement
+## Data Plan Enforcement
 We saw above that the most bandwidth usage is by you-tube, if we wanna limit or cap its usage
 ```bash
 sudo iptables -A OUTPUT -d 142.250.0.0/16 -j DROP && \
 sudo iptables -A OUTPUT -d 172.217.0.0/16 -j DROP && \
 sudo iptables -A OUTPUT -p udp --dport 443 -j DROP
+```
+
+
+# Automate Capturing & Analyzing Network Traffic With Bash and Python
+`network_monitor.py` is a python script which takes the output `capture.pcap` from the `tcpdump` command 
+```bash
+sudo tcpdump -i wlp8s0 -w capture.pcap -v
+```
+and calculates the bandwidth usage for each `IP` and the total too, then outputs this information in a json file `network_log.json`
+
+But here we need to modify the `tcpdump` command, with an interval of for example 10 minutes to process this interval captured traffic chunk with python, then take another 10 seconds interval and so on...
+
+```bash
+tcpdump -i $INTERFACE -w capture.pcap -G "$TIME" -W 1 -v
+```
+Where `$TIME` is a variable and defined at the top of the bash script in seconds, it's defaulted to be 10 seconds.
+
+The general flow 
+```bash
+while true; do
+	capture_traffic
+	tshark_analyze_traffic
+	python_analyze_traffic_by_ip
+done
+```
+
+### Python `IPs` bandwidth usage
+```json
+"source_ip", "destination_ip": total_k_bytes_usage_for_ip (in KB),
+.
+.
+.
+total_k_bytes (in KB) <-- total bandwidth for all ips
+```
+And those `total_k_bytes_usage_for_ip`, `total_k_bytes` are accumulated, each time the logic adds up to the previously saved total.
+
+```json
+{
+"('192.168.1.7', '213.158.160.51')": 20626.78,
+"('142.250.203.238', '192.168.1.7')": 22.0,
+"('142.250.201.35', '192.168.1.7')": 319.04,
+"('142.250.200.241', '192.168.1.7')": 37.56,
+"('172.217.18.33', '192.168.1.7')": 106.83,
+"('163.121.128.134', '192.168.1.7')": 81.53,
+"('172.217.18.46', '192.168.1.7')": 20.0,
+"('173.194.16.231', '192.168.1.7')": 2301.0,
+"('192.168.1.7', '34.117.188.166')": 7.15,
+"('192.168.1.7', '224.0.0.251')": 0.18,
+"('172.217.18.234', '192.168.1.7')": 61.13,
+"('172.217.171.202', '192.168.1.7')": 35.0,
+"('192.168.1.7', '74.125.71.84')": 50.74,
+"('142.251.37.225', '192.168.1.7')": 40.52,
+"('192.168.1.7', '216.58.198.78')": 78.72,
+"('142.251.116.94', '192.168.1.7')": 26.84,
+"('172.217.18.34', '192.168.1.7')": 18.36,
+"('142.250.203.234', '192.168.1.7')": 55.07,
+"('172.67.70.44', '192.168.1.7')": 835.0,
+"('108.159.102.36', '192.168.1.7')": 227.0,
+"('192.168.1.7', '199.232.81.229')": 6.17,
+"('162.159.153.4', '192.168.1.7')": 1343.03,
+"('162.159.152.4', '192.168.1.7')": 34.99,
+"('142.250.200.195', '192.168.1.7')": 23.53,
+"('192.168.1.7', '213.158.189.12')": 403.0,
+"('192.168.1.7', '213.158.189.14')": 8.48,
+"('142.250.203.227', '192.168.1.7')": 3.83,
+"('192.168.1.7', '74.125.13.6')": 6490.0,
+"('192.168.1.2', '239.255.255.250')": 0.32,
+"('142.250.200.238', '192.168.1.7')": 12.98,
+"('142.250.200.202', '192.168.1.7')": 9.01,
+"('104.26.13.250', '192.168.1.7')": 8.42,
+"('192.168.1.7', '196.10.52.57')": 0.18,
+"('192.168.1.7', '34.107.141.31')": 8.72,
+"total_k_bytes": 104087.16
+}
+```
+
+Here for example I was manly watching a you-tube video and making some google searches, that's why we find google's ips here.
+
+### To run the code
+```bash
+chmod +x network_monitor.sh
+sudo ./network_monitor.sh
+```
+
+Don't forget to update the `network interface` in the top of the bash script
+```bash
+#!/bin/bash
+
+# Configurable Variables
+INTERFACE="wlp8s0" # Change this to your actual network interface
+TIME=10 # Alert threshold in MB
 ```
