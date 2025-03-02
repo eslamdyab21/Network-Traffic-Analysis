@@ -8,7 +8,7 @@ LOG_FILE="network_monitor.log"
 
 # Function to Capture Traffic
 capture_traffic() {
-    echo "⏳ Capturing traffic for 10 seconds..."
+    echo "⏳ Capturing traffic for $TIME seconds..."
     tcpdump -i $INTERFACE -w capture.pcap -G "$TIME" -W 1 -v
     echo "✅ Capture complete!"
 }
@@ -23,6 +23,10 @@ analyze_total_traffic() {
 # Function to Analyze Traffic
 analyze_traffic_by_ip() {
     tshark -r capture.pcap -q -z conv,udp >> traffic.log
+
+    echo "⏳ Updating josn log..."
+    python3 network_monitor.py
+    echo "✅ Updating complete!"
 }
 
 
@@ -34,4 +38,12 @@ capture_traffic
 analyze_total_traffic
 analyze_traffic_by_ip
 
+echo "✅ Monitoring Complete!"
+
+echo "📡 Starting Packet Core Monitoring..."
+while true; do
+    capture_traffic
+    analyze_total_traffic
+    analyze_traffic_by_ip
+done
 echo "✅ Monitoring Complete!"
