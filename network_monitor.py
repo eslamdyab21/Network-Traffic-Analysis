@@ -2,14 +2,17 @@ import json
 import os
 
 
-total_k_bytes = 0
-checked_ids_map = {}
-
 def parse_traffic(traffic_file, hashmap):
+
     with open(traffic_file) as file:
         for line in file:
             if 'eth' in line:
                 total_k_bytes = round(float(line.strip().split('bytes:')[-1]) / 1024, 2)
+                if hashmap.get("total_k_bytes"):
+                    hashmap["total_k_bytes"] += total_k_bytes
+                    hashmap["total_k_bytes"] = round(hashmap["total_k_bytes"], 2)
+                else:
+                    hashmap["total_k_bytes"] = total_k_bytes
 
             if '<->' in line:
                 parts = line.split()
@@ -24,18 +27,14 @@ def parse_traffic(traffic_file, hashmap):
                 if parts[11] == 'bytes':
                     total_k_bytes_for_ip = total_k_bytes_for_ip / 1024
 
-                if hashmap.get((source_ip,destination_ip)) is None:
-                    hashmap[(source_ip,destination_ip)] = [total_k_bytes_for_ip, total_k_bytes]
-                    hashmap[(source_ip,destination_ip)][0] = round(hashmap[(source_ip,destination_ip)][0], 2)
-                    checked_ids_map[(source_ip,destination_ip)] = 1
-                else:
-                    if checked_ids_map.get((source_ip,destination_ip)) is None:
-                        hashmap[(source_ip,destination_ip)][1] += total_k_bytes
-                        hashmap[(source_ip,destination_ip)][1] = round(hashmap[(source_ip,destination_ip)][1], 2)
-                        checked_ids_map[(source_ip,destination_ip)] = 1
 
-                    hashmap[(source_ip,destination_ip)][0] += total_k_bytes_for_ip
-                    hashmap[(source_ip,destination_ip)][0] = round(hashmap[(source_ip,destination_ip)][0], 2)
+                hashmap_key = tuple(sorted((source_ip, destination_ip)))
+                if hashmap.get(hashmap_key) is None:
+                    hashmap[hashmap_key] = total_k_bytes_for_ip
+                    hashmap[hashmap_key] = round(hashmap[hashmap_key], 2)
+                else:
+                    hashmap[hashmap_key] += total_k_bytes_for_ip
+                    hashmap[hashmap_key] = round(hashmap[hashmap_key], 2)
 
     return hashmap
 
@@ -43,13 +42,17 @@ def parse_traffic(traffic_file, hashmap):
 
 def load_traffic_json(filename="network_log.json"):
     if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-        return {}  
-    
+        return {}
+
     with open(filename, "r") as f:
         json_data = json.load(f)
 
-    # Convert string keys back to tuples
-    hashmap = {eval(k): v for k, v in json_data.items()}
+    total_k_bytes = json_data.pop("total_k_bytes", 0)
+
+    hashmap = {tuple(eval(k)): v for k, v in json_data.items()}
+
+
+    hashmap["total_k_bytes"] = total_k_bytes  
     return hashmap
 
 
