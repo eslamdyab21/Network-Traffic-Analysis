@@ -15,13 +15,13 @@ capture_traffic() {
 
 
 # Function to Analyze Traffic
-analyze_total_traffic() {
+tshark_analyze_traffic() {
     tshark -r capture.pcap -qz io,phs > traffic.log
 }
 
 
 # Function to Analyze Traffic
-analyze_traffic_by_ip() {
+python_analyze_traffic_by_ip() {
     tshark -r capture.pcap -q -z conv,udp >> traffic.log
 
     echo "⏳ Updating josn log..."
@@ -43,7 +43,7 @@ echo "✅ Monitoring Complete!"
 echo "📡 Starting Packet Core Monitoring..."
 while true; do
     capture_traffic
-    analyze_total_traffic
-    analyze_traffic_by_ip
+    tshark_analyze_traffic
+    python_analyze_traffic_by_ip
 done
 echo "✅ Monitoring Complete!"
